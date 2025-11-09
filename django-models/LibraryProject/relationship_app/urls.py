@@ -1,7 +1,14 @@
-from django.contrib import admin
-from django.urls import path, include
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
 
-urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("", include("relationship_app.urls")),  # include app URLs
-]
+def register(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("login")  # Redirect to login page or home
+    else:
+        form = UserCreationForm()
+    return render(request, "relationship_app/register.html", {"form": form})
