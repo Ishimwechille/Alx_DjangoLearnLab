@@ -2,14 +2,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 
-# Register View
 def register(request):
     if request.method == "POST":
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("login")  # Redirect to login page or home after registration
+            return redirect("login")  # redirect to login page after registration
     else:
         form = UserCreationForm()
     return render(request, "relationship_app/register.html", {"form": form})
