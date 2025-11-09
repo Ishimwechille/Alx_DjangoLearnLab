@@ -1,14 +1,7 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login
-from django.contrib.auth.forms import UserCreationForm
+from django.shortcuts import render
+from .models import Book
 
-def register(request):
-    if request.method == "POST":
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("login")  # redirect to login page after registration
-    else:
-        form = UserCreationForm()
-    return render(request, "relationship_app/register.html", {"form": form})
+# Function-based view to list all books
+def list_books(request):
+    books = Book.objects.all()  # ✅ Fetch all books
+    return render(request, 'relationship_app/list_books.html', {'books': books})  # ✅ Render the correct template
