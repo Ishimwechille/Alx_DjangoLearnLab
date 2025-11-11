@@ -1,24 +1,21 @@
-
 from django.urls import path
-from . import views
-from .views import is_librarian, list_books, LibraryDetailView, LibraryListView
+from .views import list_books
+from .views import LibraryDetailView
+from .views import index
 from django.contrib.auth.views import LoginView, LogoutView
+from . import views
 
 urlpatterns = [
-    path("", views.index, name="index"),
-    path("book_list/", list_books, name="book_list"),
-    path("libraries/", LibraryListView.as_view(), name="library_detail"),
-    path('login/', LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('logout/', LogoutView.as_view(template_name='registration/logout.html'), name='logout'),
-    path('register/', views.register.as_view(), name='register'),
-    path("librarian_view/", views.librarian_view, name="librarian_view", kwargs={'permission_required': 'relationship_app.can_view_librarian'}),
-    path("member_view/", views.member_view, name="member_view", kwargs={'permission_required': 'relationship_app.can_view_member'}),
-    # path("admin_view/", views.admin_view, name="admin_view", kwargs={'permission_required': 'relationship_app.can_view_admin'}, role_required='Admin'),
-    path("delete_book/", views.delete_book, name="delete_book", kwargs={'permission_required': 'relationship_app.can_delete_book'}),
-    path("add_book/", views.add_book, name="add_book", kwargs={'permission_required': 'relationship_app.can_add_book'}),
-    path("edit_book/", views.edit_book, name="edit_book", kwargs={'permission_required': 'relationship_app.can_change_book'}),
+    path("list_books/", list_books, name="list_books"),
+    path("library_detail/", LibraryDetailView.as_view(), name="library_detail"),
+    path("register/", views.register, name="register"),
+    path("login/", LoginView.as_view(template_name="login.html"), name="login"),
+    path("logout/", LogoutView.as_view(template_name="logout.html"), name="logout"),
+    path("", index, name="index"),
+    path("admin_view/", views.admin_view, name="admin_view"),
+    path("librarian_view/", views.librarian_view, name="librarian_view"),
+    path("member_view/", views.member_view, name="member_view"),
+    path("add_book/", views.can_add_book_view, name="can_add_book_view"),
+    path("edit_book/", views.can_change_book_view, name="can_change_book_view"),
+    path("can_delete_book_view/", views.can_delete_book_view, name="can_delete_book_view"),
 ]
-
-
-# Note: Ensure that the views and templates referenced in the URLs exist and are correctly implemented.
-# The urlpatterns list routes URLs to views. For more information please see: https://docs.djangoproject.com/en/stable/topics/http/urls/
