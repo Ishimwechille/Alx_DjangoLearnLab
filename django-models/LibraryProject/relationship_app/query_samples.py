@@ -1,33 +1,38 @@
-# File: Alx_DjangoLearnLab/django-models/LibraryProject/relationship_app/query_samples.py
-# --- a/file:///c%3A/Users/Micheal/Videos/ALX BE/django/intro_to_django/Alx_DjangoLearnLab/Alx_DjangoLearnLab/django-models/LibraryProject/relationship_app/query_samples.py
+import django
+import os
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_models.settings")
+django.setup()
+
 from relationship_app.models import Author, Book, Library, Librarian
 
-# Query all books by a specific author.
-def get_books_by_author(author_name):
+
+def run_queries():
+    # Query all books by a specific author
+    author_name = "J.K. Rowling"
     try:
         author = Author.objects.get(name=author_name)
-        books = Book.objects.filter(author=author)
-        return books
+        books_by_author = Book.objects.filter(author=author)
+        print(f"Books by {author_name}: {[book.title for book in books_by_author]}")
     except Author.DoesNotExist:
-        return None
-    
-#List all books in a library.
-def get_books_in_library(library_name):
-    try:
-        library = Library.objects.get(name=library_name)
-        books = library.books.all()
-        return books
-    except Library.DoesNotExist:
-        return None
-    
+        print(f"No author found with name {author_name}")
 
-# Retrieve the librarian for a library.
-def get_librarian_for_library(library_name):
+    # List all books in a library
+    library_name = "Central Library"
     try:
         library = Library.objects.get(name=library_name)
-        librarian = Librarian.objects.get(library=library)
-        return librarian
+        print(f"Books in {library.name}: {[book.title for book in library.books.all()]}")
     except Library.DoesNotExist:
-        return None
+        print(f"No library named {library_name}")
+        return
+
+    # Retrieve the librarian for a library
+    try:
+        librarian = Librarian.objects.get(library=library)
+        print(f"Librarian of {library.name}: {librarian.name}")
     except Librarian.DoesNotExist:
-        return None
+        print(f"No librarian found for {library.name}")
+
+
+if __name__ == "__main__":
+    run_queries()
