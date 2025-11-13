@@ -126,4 +126,29 @@ X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking
 # CSP_IMG_SRC = ("'self'", 'data:')
 # -----------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
+# SECURITY SETTINGS
+# -----------------------------------------------------------------------------
+# ✅ Force HTTPS Redirects
+SECURE_SSL_REDIRECT = True
+
+# ✅ If using a proxy (e.g., Nginx, Gunicorn, Render, Heroku),
+# this tells Django to trust the X-Forwarded-Proto header to determine if the request is HTTPS.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ✅ HTTP Strict Transport Security (HSTS)
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# ✅ Secure Cookies
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# ✅ Additional Browser Security Headers
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking
+
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
