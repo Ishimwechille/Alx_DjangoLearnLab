@@ -135,3 +135,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # --- The BASE directory of this Django project is "C:\Users\Micheal\Videos\ALX_BE\django\intro_to_django\Alx_DjangoLearnLab\Alx_DjangoLearnLab\django-models\LibraryProject"
 # --- It correctly points to the location where the project files are stored, including the "templates" directory. which is of concern...
 
+AUTH_USER_MODEL = "bookshelf.CustomUser"
