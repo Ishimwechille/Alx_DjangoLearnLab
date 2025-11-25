@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticated, AllowAny
+
 
 # Create your views here.
 /books/                 → List all books
@@ -6,4 +8,5 @@ from django.shortcuts import render
 /books/create/          → Create
 /books/<int:pk>/update/ → Update
 /books/<int:pk>/delete/ → Delete
+
 
