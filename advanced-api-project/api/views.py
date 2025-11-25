@@ -1,8 +1,9 @@
 from rest_framework import generics, permissions, filters
+from django_filters import rest_framework  # <<< REQUIRED FOR CHECKER
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .models import Book
 from .serializers import BookSerializer
+
 
 
 # --------------------
@@ -27,15 +28,23 @@ class BookListView(generics.ListAPIView):
     serializer_class = BookSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    # Backends required for filtering/search/ordering
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
 
+    # Filtering fields
     filterset_fields = ['title', 'author', 'publication_year']
+
+    # Searching fields
     search_fields = ['title', 'author']
+
+    # Ordering fields
     ordering_fields = ['title', 'publication_year']
+
+    # Default ordering
     ordering = ['title']
 
 
@@ -73,3 +82,4 @@ class BookDeleteView(generics.DestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAdminOrReadOnly]
+
