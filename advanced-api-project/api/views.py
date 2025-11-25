@@ -1,16 +1,17 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, filters
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .models import Book
 from .serializers import BookSerializer
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
 
 # --------------------
-# PERMISSIONS (example)
+# PERMISSIONS
 # --------------------
 class IsAdminOrReadOnly(permissions.BasePermission):
     """
     Allow only admin users to perform create/update/delete.
-    Others can only read data.
+    Others have read-only access.
     """
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
@@ -19,35 +20,56 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 
 # ----------------------------
-# CLASS-BASED GENERIC VIEWS
+# LIST VIEW with Filtering, Search, Ordering
 # ----------------------------
-
 class BookListView(generics.ListAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
 
+    filterset_fields = ['title', 'author', 'publication_year']
+    search_fields = ['title', 'author']
+    ordering_fields = ['title', 'publication_year']
+    ordering = ['title']
+
+
+# ----------------------------
+# DETAIL VIEW
+# ----------------------------
 class BookDetailView(generics.RetrieveAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
+# ----------------------------
+# CREATE VIEW
+# ----------------------------
 class BookCreateView(generics.CreateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAdminOrReadOnly]
 
 
+# ----------------------------
+# UPDATE VIEW
+# ----------------------------
 class BookUpdateView(generics.UpdateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAdminOrReadOnly]
 
 
+# ----------------------------
+# DELETE VIEW
+# ----------------------------
 class BookDeleteView(generics.DestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAdminOrReadOnly]
-
