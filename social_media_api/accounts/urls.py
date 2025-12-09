@@ -1,12 +1,12 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, CommentViewSet, FeedView
-
-router = DefaultRouter()
-router.register('posts', PostViewSet, basename='posts')
-router.register('comments', CommentViewSet, basename='comments')
+from django.urls import path
+from .views import FollowUserView, UnfollowUserView, RegisterView, LoginView
 
 urlpatterns = [
-    path('feed/', FeedView.as_view(), name='feed'),  # Explicit feed endpoint
-    path('', include(router.urls)),                  # CRUD endpoints
+    # Follow / unfollow endpoints
+    path('follow/<int:user_id>/', FollowUserView.as_view(), name='follow-user'),
+    path('unfollow/<int:user_id>/', UnfollowUserView.as_view(), name='unfollow-user'),
+
+    # Registration and login endpoints
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
 ]
