@@ -9,7 +9,7 @@ from rest_framework.routers import DefaultRouter,
 from django.urls import path, include
 from .views import PostViewSet, CommentViewSet, FeedView,
 from .views import FeedView,
-
+from django.shortcuts import get_object_or_404,
 
 
 # DRF router for posts and comments
