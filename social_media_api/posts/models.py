@@ -28,4 +28,15 @@ class Comment(models.Model):
         ordering = ["created_at"]
 
     def __str__(self):
-        return f"Comment by {self.author} on {self.post_id}"
+        return f"Comment by {self.author} on Post {self.post.id}"
+
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'post')  # Prevent duplicate likes
+
+    def __str__(self):
+        return f"{self.user} liked Post {self.post.id}"
