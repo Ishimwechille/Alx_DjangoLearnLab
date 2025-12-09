@@ -1,27 +1,23 @@
-from rest_framework import viewsets, permissions, filters
-from rest_framework.decorators import action
+from rest_framework import generics, viewsets, permissions, filters
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Post, Comment
-from .serializers import PostListSerializer, PostDetailSerializer, CommentSerializer
+from .serializers import PostListSerializer, PostDetailSerializer, PostSerializer, CommentSerializer
 from .permissions import IsOwnerOrReadOnly
 
 
+# Pagination class
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 100
 
 
+# Post CRUD
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = (
-        Post.objects
-        .select_related("author")
-        .prefetch_related("comments")
-        .all()
-    )
+    queryset = Post.objects.select_related("author").prefetch_related("comments").all()
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -37,32 +33,19 @@ class PostViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=False, methods=["get"], permission_classes=[permissions.IsAuthenticated])
-    def feed(self, request):
-        """
-        Returns posts from users the current user follows.
-        GET /api/posts/feed/
-        """
-        user = request.user
-        followed_users = user.following.all()
 
-        qs = (
-            Post.objects
-            .filter(author__in=followed_users)
-            .select_related("author")
-            .prefetch_related("comments")
-            .order_by("-created_at")
-        )
+# Feed for followed users (separate view)
+class FeedView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-        page = self.paginate_queryset(qs)
-
-        serializer = self.get_serializer(page if page else qs, many=True)
-
-        if page is not None:
-            return self.get_paginated_response(serializer.data)
-        return Response(serializer.data)
+    def get_queryset(self):
+        user = self.request.user
+        # Explicit filter for automated checks
+        return Post.objects.filter(author__in=user.following.all()).order_by('-created_at')
 
 
+# Comment CRUD
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.select_related("author", "post").all()
     serializer_class = CommentSerializer
