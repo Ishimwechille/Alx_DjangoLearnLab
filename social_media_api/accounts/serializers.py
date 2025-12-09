@@ -9,12 +9,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
-        model = User
+        model = get_user_model()
         fields = ['username', 'email', 'password', 'bio', 'profile_picture']
 
     def create(self, validated_data):
-        # Must explicitly use create_user
-        user = User.objects.create_user(
+        user = get_user_model().objects.create_user(
             username=validated_data['username'],
             email=validated_data.get('email'),
             password=validated_data['password'],
@@ -23,7 +22,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         Token.objects.create(user=user)
         return user
-
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
