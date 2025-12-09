@@ -7,7 +7,9 @@ from .models import Post, Comment,
 from .serializers import PostListSerializer, PostDetailSerializer, CommentSerializer
 from rest_framework.routers import DefaultRouter,
 from django.urls import path, include
-from .views import PostViewSet, CommentViewSet, FeedView
+from .views import PostViewSet, CommentViewSet, FeedView,
+from .views import FeedView,
+
 
 
 # DRF router for posts and comments
@@ -17,7 +19,7 @@ router.register('comments', CommentViewSet, basename='comments')
 
 urlpatterns = [
     path('', include(router.urls)),           # posts/ and comments/ endpoints
-    path('feed/', FeedView.as_view(), name='feed'),  # ✅ feed endpoint
+    path("feed/", FeedView.as_view(), name="feed"),  # ✅ feed endpoint
 ]
 
 # Custom permission to allow users to edit/delete only their own objects
