@@ -1,6 +1,46 @@
-from rest_framework import generics, permissions
-from .models import Post
-from .serializers import PostListSerializer
+from rest_framework import generics, permissions,
+from .models import Post,
+from .serializers import PostListSerializer,
+from rest_framework import viewsets, permissions,
+from rest_framework.permissions import IsAuthenticated,
+from .models import Post, Comment,
+from .serializers import PostListSerializer, PostDetailSerializer, CommentSerializer
+
+
+# Custom permission to allow users to edit/delete only their own objects
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        # Read-only permissions are allowed for any request
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        # Write permissions only if the user is the owner
+        return obj.author == request.user
+
+# -------------------------
+# Post ViewSet
+# -------------------------
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()  # Required by the check
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
+    def get_serializer_class(self):
+        if self.action in ['list']:
+            return PostListSerializer
+        return PostDetailSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+# -------------------------
+# Comment ViewSet
+# -------------------------
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()  # Required by the check
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 class FeedView(generics.ListAPIView):
     serializer_class = PostListSerializer
