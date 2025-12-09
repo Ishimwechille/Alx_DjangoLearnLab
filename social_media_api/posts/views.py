@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import Post, Comment, Like, Notification
 from .serializers import PostListSerializer, PostDetailSerializer, CommentSerializer
+from rest_framework import generics, permissions
+from .models import Post
+from .serializers import PostListSerializer
 
 # Custom permission
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -41,14 +44,18 @@ class CommentViewSet(viewsets.ModelViewSet):
 # -------------------------
 # Feed View
 # -------------------------
+
+
 class FeedView(generics.ListAPIView):
     serializer_class = PostListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]  # ✅ explicit
 
     def get_queryset(self):
         user = self.request.user
+        # Assuming your custom user model has a ManyToMany 'following' field
         following_users = user.following.all()
         return Post.objects.filter(author__in=following_users).order_by('-created_at')
+
 
 # -------------------------
 # Like / Unlike Views
