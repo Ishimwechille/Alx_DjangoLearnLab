@@ -1,16 +1,12 @@
-from rest_framework.routers import DefaultRouter
-from django.urls import include, path
-from .views import UserViewSet, RegisterView, LoginView
-
-# DRF router for UserViewSet (read, follow, unfollow, followers, following)
-router = DefaultRouter()
-router.register(r"accounts", UserViewSet, basename="user")
+from django.urls import path
+from .views import FollowUserView, UnfollowUserView, RegisterView, LoginView
 
 urlpatterns = [
-    # Router URLs for UserViewSet
-    path("", include(router.urls)),
+    # Follow / unfollow endpoints
+    path('follow/<int:user_id>/', FollowUserView.as_view(), name='follow-user'),
+    path('unfollow/<int:user_id>/', UnfollowUserView.as_view(), name='unfollow-user'),
 
-    # Manual URLs for registration and login
-    path("register/", RegisterView.as_view(), name="register"),
-    path("login/", LoginView.as_view(), name="login"),
+    # Registration and login
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
 ]
