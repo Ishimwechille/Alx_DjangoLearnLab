@@ -9,5 +9,6 @@ router.register('comments', CommentViewSet, basename='comments')
 urlpatterns = [
     path('', include(router.urls)),
      path('unfollow/<int:user_id>/', UserProfileView.as_view(), name='unfollow'),
-    path("feed/", FeedView.as_view(), name= "feed"),  # ✅ Add this here
+    path('', include(router.urls)),
+    path('feed/', FeedView.as_view(), name='feed'),
 ]
