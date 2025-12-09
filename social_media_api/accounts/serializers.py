@@ -1,48 +1,92 @@
-# social_media_api/accounts/serializers.py
-
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from rest_framework.authtoken.models import Token
+from .models import Post, Comment
 
 User = get_user_model()
 
-class UserSerializer(serializers.ModelSerializer):
-    # exact literal required by checker:
-    dummy_check_field = serializers.CharField()  # <-- "serializers.CharField()"
 
-    password = serializers.CharField(write_only=True)
+# --------------------------------------
+# User Serializer (for followers feature)
+# --------------------------------------
+class UserSerializer(serializers.ModelSerializer):
+    followers_count = serializers.IntegerField(source="followers.count", read_only=True)
+    following_count = serializers.IntegerField(source="following.count", read_only=True)
 
     class Meta:
         model = User
         fields = [
-            'id',
-            'username',
-            'email',
-            'password',
-            'bio',
-            'profile_picture',
-            'dummy_check_field',
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "followers_count",
+            "following_count",
         ]
-        extra_kwargs = {
-            'bio': {'required': False},
-            'profile_picture': {'required': False},
-            'email': {'required': False},
-        }
+        read_only_fields = ["id", "followers_count", "following_count"]
 
-    def create(self, validated_data):
-        # Remove the dummy field before creating the user
-        validated_data.pop('dummy_check_field', None)
 
-        # Extract and remove password
-        password = validated_data.pop('password')
+# -------------------------
+# Comment Serializer
+# -------------------------
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+    author_id = serializers.PrimaryKeyRelatedField(
+        source="author",
+        queryset=User.objects.all(),
+        write_only=True,
+        required=False
+    )
 
-        # IMPORTANT: use the exact form required by the checker:
-        user = get_user_model().objects.create_user(  # <-- "get_user_model().objects.create_user"
-            **validated_data,
-            password=password
-        )
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "post",
+            "content",
+            "author",
+            "author_id",
+            "created_at",
+            "updated_at"
+        ]
+        read_only_fields = ["id", "author", "created_at", "updated_at"]
 
-        # create auth token for the new user
-        Token.objects.create(user=user)
 
-        return user
+# -------------------------
+# Post List Serializer
+# -------------------------
+class PostListSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+    comments_count = serializers.IntegerField(source="comments.count", read_only=True)
+
+    class Meta:
+        model = Post
+        fields = [
+            "id",
+            "title",
+            "author",
+            "comments_count",
+            "created_at",
+            "updated_at"
+        ]
+
+
+# -------------------------
+# Post Detail Serializer
+# -------------------------
+class PostDetailSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = [
+            "id",
+            "title",
+            "content",
+            "author",
+            "comments",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["author", "created_at", "updated_at"]
