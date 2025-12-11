@@ -1,87 +1,101 @@
-from rest_framework import generics, viewsets, status, permissions
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, generics, permissions, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from .models import Post, Comment, Like, Notification
-from .serializers import PostListSerializer, PostDetailSerializer, CommentSerializer
-from rest_framework import generics, permissions
-from .models import Post
-from .serializers import PostListSerializer
+from rest_framework.views import APIView
+from django_filters import rest_framework
+from rest_framework import filters
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .serializers import PostSerializer, CommentSerializer
+from .models import Post, Comment, Like
+from notifications.models import Notification
 
-# Custom permission
-class IsOwnerOrReadOnly(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return obj.author == request.user
 
-# -------------------------
-# Post ViewSet
-# -------------------------
+# Create your  here.
+
+
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = [rest_framework.DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['title', 'content']
+    search_fields = ['title', 'content']
 
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return PostListSerializer
-        return PostDetailSerializer
+    def get_object(self):
+        post = super().get_object()
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
+            if post.author != self.request.user:
+                raise PermissionDenied("You Do not have permission to modify this post")
+        return post
 
-# -------------------------
-# Comment ViewSet
-# -------------------------
+
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = [rest_framework.DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['title', 'content']
+    search_fields = ['title', 'content']
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    def get_object(self):
+        comment = super().get_object()
 
-# -------------------------
-# Feed View
-# -------------------------
+        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
+            if comment.author != self.request.user:
+                raise PermissionDenied('You do not have permission to modify this comment')
+        return comment
 
 
 class FeedView(generics.ListAPIView):
-    serializer_class = PostListSerializer
-    permission_classes = [permissions.IsAuthenticated]  # ✅ explicit
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        # Assuming your custom user model has a ManyToMany 'following' field
         following_users = user.following.all()
+
         return Post.objects.filter(author__in=following_users).order_by('-created_at')
 
 
-# -------------------------
-# Like / Unlike Views
-# -------------------------
-class LikePostView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+class LikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        like, created = Like.objects.get_or_create(user=request.user, post=post)
-        if created:
-            if post.author != request.user:
-                Notification.objects.create(
-                    user=post.author,
-                    message=f"{request.user.username} liked your post '{post.title}'"
-                )
-            return Response({"status": "liked"}, status=status.HTTP_201_CREATED)
-        return Response({"status": "already liked"}, status=status.HTTP_200_OK)
+        post = generics.get_object_or_404(Post, pk=pk)
 
-class UnlikePostView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+        like, create = Like.objects.get_or_create(user=request.user, post=post)
+
+        if not create:
+            return Response({'error': 'you have already liked this post'}, status=status.HTTP_400_BAD_REQUEST)
+
+        Notification.objects.create(
+            recipient=post.author,
+            actor=request.user,
+            verb='liked',
+            target=post
+        )
+
+        return Response({'status': 'Post Liked'}, status=status.HTTP_201_CREATED)
+
+
+class UnlikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
+        post = generics.get_object_or_404(Post, pk=pk)
+
         like = Like.objects.filter(user=request.user, post=post).first()
-        if like:
-            like.delete()
-            return Response({"status": "unliked"}, status=status.HTTP_200_OK)
-        return Response({"status": "not liked yet"}, status=status.HTTP_400_BAD_REQUEST)
+        if not like:
+            return Response({'error': 'you have not liked this post'}, status=status.HTTP_400_BAD_REQUEST)
+
+        like.delete()
+
+        Notification.objects.create(
+            recipient=post.author,
+            actor=request.user,
+            verb='unliked',
+            target=post
+        )
+
+        return Response({'status': 'Post Unliked'}, status=status.HTTP_200_OK)
